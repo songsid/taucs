@@ -78,7 +78,7 @@ clean:
 	- rmdir $(DIRMEX)
 
 distclean:
-	- $(RM) *.tar *.zip
+	- $(RM) *.tar *.zip *.tgz
 	- $(RM) configurator$(PATHSEP)configurator
 	- $(RM) configurator$(PATHSEP)configurator.exe
 	- $(RM) doc$(PATHSEP)taucs.tex
@@ -132,6 +132,14 @@ tar: $(FILES) $(LIBFILES)
 	zip -r   taucs.zip      $(FILES)
 	zip -r   taucs_full.zip $(FILES) $(LIBFILES)
 	chmod 644 *.zip *.tgz
+	
+external-tar:
+	@echo "Creating external tar files"
+	-$(RM) taucs-external.tgz taucs-external.zip
+	tar zcpf taucs-external.tgz      external
+	zip -r   taucs-external.zip      external
+	chmod 644 *.zip *.tgz
+
 
 #	$(CC) -c $(CFLAGS) $(STDDEFS) $(STDINCS) \
 #	-DTAUCS_BLAS_UNDERSCORE \

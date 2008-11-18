@@ -11,8 +11,7 @@ DEFFLG=/D
 
 CC        = cl
 CFLAGS    = /nologo /O2 /W3 /D "WIN32" /MT
-msvc6_CFLAGS    = /nologo /Op /GZ /Ow /Z7 /Od /Oy- /W4 /D "WIN32" /MT
-CFLAGS    = /nologo /O2 /Ot /Ox /Oy- /Z7 /W4 /D "WIN32" /MT -I "%ProgramFiles%\Microsoft Visual Studio 8\VC\PlatformSDK\Include"
+CFLAGS    = /nologo /Op /GZ /Ow /Z7 /Od /Oy- /W4 /D "WIN32" /MT
 COUTFLG   =/Fo
 
 FC        = $(CC)
