@@ -9,6 +9,7 @@ PATHSEP=/
 DEFFLG=-D
 
 FC        = g77
+FC        = gfortran
 FFLAGS    = -O3 -g -fno-second-underscore -Wall 
 FOUTFLG   =-o 
 
@@ -40,14 +41,22 @@ HOME_STOLEDO = /specific/a/home/cc/cs/stoledo/Public
 ##LIBLAPACK = -L $(HOME_STOLEDO)/Linux_P4SSE2/lib -llapack
 #LIBLAPACK = -L $(HOME_STOLEDO)/Linux_P4SSE2/lib -llapack -L . -llapackfull
 
-LIBBLAS   = -L external/lib/linux -lf77blas -lcblas -latlas
-LIBLAPACK = -L external/lib/linux -llapack
-LIBLAPACK = -L external/lib/linux -llapack -llapack_sytrf 
+#LIBBLAS   = -L external/lib/linux -lf77blas -lcblas -latlas
+#LIBLAPACK = -L external/lib/linux -llapack
+#LIBLAPACK = -L external/lib/linux -llapack -llapack_sytrf 
 
-LIBMETIS  = -L external/lib/linux -lmetis 
+#LIBMETIS  = -L external/lib/linux -lmetis 
 
-LIBF77 = -lg2c  
-LIBC   = -lm 
+#LIBF77 = -lg2c  
+#LIBC   = -lm 
+
+LIBBLAS   = -L external/lib/linux -lgoto -lpthread
+LIBLAPACK = external/lib/linux/lapack_LINUX.a
+
+LIBMETIS  = -L external/lib/linux -lmetis
+
+LIBF77 = -lgfortran
+LIBC   = -lm
 
 #########################################################
 
