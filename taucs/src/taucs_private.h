@@ -288,8 +288,8 @@ void              taucs_sccs_times_vec_dacc      (taucs_ccs_matrix* m,
 taucs_ccs_matrix* taucs_dtl(ccs_augment_nonpositive_offdiagonals)(taucs_ccs_matrix* A);
 taucs_ccs_matrix*     taucs_ccs_augment_nonpositive_offdiagonals (taucs_ccs_matrix* A);
 
-taucs_ccs_matrix* taucs_dtl(ccs_transpose)(taucs_ccs_matrix* A);
-taucs_ccs_matrix* taucs_ccs_transpose     (taucs_ccs_matrix* A);
+taucs_ccs_matrix* taucs_dtl(ccs_transpose)(taucs_ccs_matrix* A, int pattern_only);
+taucs_ccs_matrix* taucs_ccs_transpose     (taucs_ccs_matrix* A, int pattern_only);
 void              taucs_ccs_permute_rows_inplace(taucs_ccs_matrix *A, int *row_order);
 
 taucs_ccs_matrix *taucs_ccs_find_ata_pattern(taucs_ccs_matrix *A);

@@ -1324,7 +1324,7 @@ static multiqr_context* multiqr_context_create(taucs_ccs_matrix *A, taucs_multiq
 
   context->symbolic = symbolic;
   context->A = A;
-  context->At = taucs_ccs_transpose(A);
+  context->At = taucs_ccs_transpose(A, 0);
   context->row_cleared = (int*)taucs_calloc(A->m, sizeof(int));
   context->column_cleared = (int*)taucs_calloc(A->n, sizeof(int));
   context->map_rows = (int*)taucs_malloc((A->m  + A->n)* sizeof(int)); // We add n because of row additions
@@ -3958,7 +3958,7 @@ taucs_ccs_matrix *taucs_dtl(multiqr_get_R)(taucs_multiqr_factor *F, int **column
   /* Correct Rt with row order and transpose (for R) */
   Rt->colptr[min(F->n, F->m)] = Rt_nnz;
   taucs_ccs_permute_rows_inplace(Rt, corder);
-  R = taucs_ccs_transpose(Rt);
+  R = taucs_ccs_transpose(Rt, 0);
   taucs_ccs_free(Rt);
   *column_order = corder;
 

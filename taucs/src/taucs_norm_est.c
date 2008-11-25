@@ -72,7 +72,7 @@ taucs_double taucs_dtl(gross_largest_sv_explicit)(int m, int n,
   sv = taucs_malloc(n * sizeof(taucs_datatype));;
 
   if (At == NULL)
-    At = taucs_ccs_transpose(A);
+    At = taucs_ccs_transpose(A, 0);
 
   /* Init with random normalized vector */
   for(i = 0; i < n; i++)

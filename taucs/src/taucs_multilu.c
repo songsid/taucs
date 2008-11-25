@@ -1319,7 +1319,7 @@ cilk static multilu_context* multilu_context_create(taucs_ccs_matrix *A,
   context->symbolic = symbolic;
   context->thresh = thresh;
   context->A = A;
-  context->At = taucs_ccs_transpose(A);
+  context->At = taucs_ccs_transpose(A, 0);
   context->row_cleared = (int*)taucs_calloc(A->m, sizeof(int));
   context->column_cleared = (int*)taucs_calloc(A->n, sizeof(int));
   context->map_rows = (int*)taucs_malloc(A->m * sizeof(int));
@@ -4181,7 +4181,7 @@ taucs_lu_factor *taucs_dtl(multilu_factor_to_lu_factor)(taucs_multilu_factor *F)
   /* Correct Ut with row order and transpose (for U) */
   Ut->colptr[n] = Ut_nnz;
   taucs_ccs_permute_rows_inplace(Ut, LU->c);
-  LU->U = taucs_ccs_transpose(Ut);
+  LU->U = taucs_ccs_transpose(Ut, 0);
   taucs_ccs_free(Ut);
   
   /* Create L values */
