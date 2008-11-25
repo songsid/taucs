@@ -746,34 +746,33 @@ taucs_dtl(ccs_augment_nonpositive_offdiagonals)(taucs_ccs_matrix* A)
 /*************************************************************************************
  * Function: multilu_transpose_sparse
  *
- * Description: Transpose a given sparse matrix A. If A->values is NULL then it assumed
- *              that this a "structure-only" matrix and the tranpose is too.
+ * Description: Transpose a given sparse matrix A. If A->values is NULL or pattern_only is true
+ *              the matrix is treated as "structure-only" matrix and the tranpose is too.
  *
  *************************************************************************************/
 
 #ifdef TAUCS_CORE_GENERAL
-taucs_ccs_matrix*
-taucs_ccs_transpose(taucs_ccs_matrix *A)
+taucs_ccs_matrix *taucs_ccs_transpose(taucs_ccs_matrix *A, int pattern_only)
 {
 
 #ifdef TAUCS_DOUBLE_IN_BUILD
   if (A->flags & TAUCS_DOUBLE)
-    return taucs_dccs_transpose(A);
+    return taucs_dccs_transpose(A, pattern_only);
 #endif
 
 #ifdef TAUCS_SINGLE_IN_BUILD
   if (A->flags & TAUCS_SINGLE)
-    return taucs_sccs_transpose(A);
+    return taucs_sccs_transpose(A, pattern_only);
 #endif
 
 #ifdef TAUCS_DCOMPLEX_IN_BUILD
   if (A->flags & TAUCS_DCOMPLEX)
-    return taucs_zccs_transpose(A);
+    return taucs_zccs_transpose(A, pattern_only);
 #endif
 
 #ifdef TAUCS_SCOMPLEX_IN_BUILD
   if (A->flags & TAUCS_SCOMPLEX)
-    return taucs_cccs_transpose(A);
+    return taucs_cccs_transpose(A, pattern_only);
 #endif
       
   assert(0);
@@ -783,8 +782,7 @@ taucs_ccs_transpose(taucs_ccs_matrix *A)
 
 #ifndef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix*
-taucs_dtl(ccs_transpose)(taucs_ccs_matrix *A)
+taucs_ccs_matrix *taucs_dtl(ccs_transpose)(taucs_ccs_matrix *A, int pattern_only)
 {
   taucs_ccs_matrix *At;
   int *row_size, *row_index;
@@ -796,7 +794,7 @@ taucs_dtl(ccs_transpose)(taucs_ccs_matrix *A)
   if ( A->flags & TAUCS_SYMMETRIC ) return NULL;
   if ( A->flags & TAUCS_HERMITIAN ) return NULL;
 
-  do_values = ( (A->taucs_values) != NULL );
+  do_values = ( (A->taucs_values) != NULL && !pattern_only);
   
   /* Allocate space for At */
   At = taucs_malloc(sizeof(taucs_ccs_matrix));
@@ -814,7 +812,6 @@ taucs_dtl(ccs_transpose)(taucs_ccs_matrix *A)
 
   At->m = A->n;
   At->n = A->m;
-  /*At->nnz = A->nnz;*/
   nnz = A->colptr[ A->n ];
   At->colptr = taucs_calloc(At->n + 1, sizeof(int));
   At->rowind = taucs_calloc( nnz /*At->nnz*/, sizeof(int));
@@ -891,7 +888,7 @@ void taucs_ccs_permute_rows_inplace(taucs_ccs_matrix *A, int *row_order)
 #ifdef TAUCS_CORE_GENERAL
 taucs_ccs_matrix *taucs_ccs_find_ata_pattern(taucs_ccs_matrix *A)
 {
-  taucs_ccs_matrix *AT = taucs_ccs_transpose(A);
+  taucs_ccs_matrix *AT = taucs_ccs_transpose(A, 1);
 
   int *flag = taucs_malloc(A->m * sizeof(int));
   memset(flag, 0, A->m * sizeof(int));

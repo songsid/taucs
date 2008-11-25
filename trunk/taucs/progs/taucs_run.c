@@ -54,30 +54,29 @@ void rnorm(taucs_ccs_matrix* A, void* x, void* b, void* aux)
 
 void rnorm_many(taucs_ccs_matrix* A, void* x, void* b, void* aux,int nrhs)
 {
-
-	double relerr = 0.0;
-	int i;
-
-	taucs_ccs_times_vec_many(A,x,aux,nrhs);
-
-  taucs_vec_axpby_many(A->n,A->flags,1.0,aux,-1.0,b,aux,nrhs);
-
-	for (i=0;i<nrhs;i++) {
-if (A->flags & TAUCS_DOUBLE)
-		relerr = taucs_vec_norm2(A->n,A->flags,(taucs_double *)aux+i*(A->n)) 
-           / taucs_vec_norm2(A->n,A->flags,(taucs_double *)b+i*(A->n));
-else if (A->flags & TAUCS_SINGLE)
-		relerr = taucs_vec_norm2(A->n,A->flags,(taucs_single *)aux+i*(A->n)) 
-           / taucs_vec_norm2(A->n,A->flags,(taucs_single *)b+i*(A->n));
-else if (A->flags & TAUCS_DCOMPLEX)
-		relerr = taucs_vec_norm2(A->n,A->flags,(taucs_dcomplex *)aux+i*(A->n)) 
-           / taucs_vec_norm2(A->n,A->flags,(taucs_dcomplex *)b+i*(A->n));
-else if (A->flags & TAUCS_SCOMPLEX)
-		relerr = taucs_vec_norm2(A->n,A->flags,(taucs_scomplex *)aux+i*(A->n)) 
-           / taucs_vec_norm2(A->n,A->flags,(taucs_scomplex *)b+i*(A->n));
-
-		taucs_printf("relative 2-norm of the residual %.2e \n",relerr);
-	}
+  double relerr = 0.0;
+  int i;
+  
+  taucs_ccs_times_vec_many(A,x,aux,nrhs);
+  
+  taucs_vec_axpby_many(A->m,A->flags,1.0,aux,-1.0,b,aux,nrhs);
+  
+  for (i=0;i<nrhs;i++) {
+    if (A->flags & TAUCS_DOUBLE)
+      relerr = taucs_vec_norm2(A->m,A->flags,(taucs_double *)aux+i*(A->m)) 
+	/ taucs_vec_norm2(A->m,A->flags,(taucs_double *)b+i*(A->m));
+    else if (A->flags & TAUCS_SINGLE)
+      relerr = taucs_vec_norm2(A->m,A->flags,(taucs_single *)aux+i*(A->m)) 
+	/ taucs_vec_norm2(A->m,A->flags,(taucs_single *)b+i*(A->m));
+    else if (A->flags & TAUCS_DCOMPLEX)
+      relerr = taucs_vec_norm2(A->m,A->flags,(taucs_dcomplex *)aux+i*(A->m)) 
+	/ taucs_vec_norm2(A->m,A->flags,(taucs_dcomplex *)b+i*(A->m));
+    else if (A->flags & TAUCS_SCOMPLEX)
+      relerr = taucs_vec_norm2(A->m,A->flags,(taucs_scomplex *)aux+i*(A->m)) 
+           / taucs_vec_norm2(A->m,A->flags,(taucs_scomplex *)b+i*(A->m));
+    
+    taucs_printf("relative 2-norm of the residual %.2e \n",relerr);
+  }
 }
 
 int main(int argc, char* argv[])
@@ -112,6 +111,7 @@ int main(int argc, char* argv[])
   int opt_dcomplex = 0;
   int datatype     = TAUCS_DOUBLE;
 
+  int opt_all1rhs  = 0;
 	
   for (i=0; argv[i]; i++) {
     int understood = FALSE;
@@ -134,6 +134,8 @@ int main(int argc, char* argv[])
     understood |= taucs_getopt_double(argv[i],opt_arg,"taucs_run.nrhs",&opt_nrhs);
 
     understood |= taucs_getopt_string(argv[i],opt_arg,"taucs_run.params",&gl_parameters);
+
+    understood |= taucs_getopt_boolean(argv[i],opt_arg,"taucs_run.all1rhs",&opt_all1rhs);
 
     if (!understood) taucs_printf("taucs_run: illegal option [%s]\n",
 				  argv[i]);
@@ -278,8 +280,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  if (!opt_all1rhs) {
 	for(j=0;j<(int)opt_nrhs;j++) {
-		for(i=0; i<A->n; i++) {
+	  for(i=0; i<A->n; i++) {
 
 #ifdef TAUCS_SINGLE_IN_BUILD
 		  if (datatype & TAUCS_SINGLE) 
@@ -313,24 +316,70 @@ int main(int argc, char* argv[])
 	}
 
 	taucs_ccs_times_vec_many(A,X,B,(int)opt_nrhs);
+  } else { 
+    for(j=0;j<(int)opt_nrhs;j++) {
+      for(i=0; i<A->m; i++) {
+#ifdef TAUCS_SINGLE_IN_BUILD
+	if (datatype & TAUCS_SINGLE) 
+	  ((taucs_single*)B)[i+j*(A->m)]= 1.0;
+#endif
+	
+#ifdef TAUCS_DOUBLE_IN_BUILD
+	if (datatype & TAUCS_DOUBLE) 
+	  ((taucs_double*)B)[i+j*(A->m)]= 1.0;
+#endif
 
-	rc = taucs_linsolve(A,NULL,(int)opt_nrhs,Y,B,argv,opt_arg);
+#ifdef TAUCS_SCOMPLEX_IN_BUILD
+	if (datatype & TAUCS_SCOMPLEX) {
+	  taucs_single   cre,cim;
+	  cre = 1.0;
+	  cim = 0.0;
+	  ((taucs_scomplex*)B)[i+j*(A->m)] = taucs_ccomplex_create(cre,cim);
+	}
+#endif
 
-	taucs_vec_axpby_many(A->n,A->flags,1.0,X,-1.0,Y,Z,(int)opt_nrhs);
+#ifdef TAUCS_DCOMPLEX_IN_BUILD
+	if (datatype & TAUCS_DCOMPLEX) {
+	  taucs_single   zre,zim;
+	  zre = 1.0;
+	  zim = 0.0;
+	  ((taucs_dcomplex*)B)[i+j*(A->m)] = taucs_zcomplex_create(zre,zim);
+	}
+#endif
+      }
+    }   
+  }
 
-	rnorm_many(A,Y,B,Z,(int)opt_nrhs);
+  double start = taucs_wtime();
+  rc = taucs_linsolve(A,NULL,(int)opt_nrhs,Y,B,argv,opt_arg);
+  taucs_printf("total solve time is %.2e sec\n", taucs_wtime() - start);
+  
+  if (!opt_all1rhs && opt_nrhs == 1) {
+    taucs_vec_axpby_many(A->n,A->flags,1.0,X,-1.0,Y,Z,(int)opt_nrhs);
+    double rerr = taucs_vec_norm2(A->n, A->flags,Z) / taucs_vec_norm2(A->n, A->flags, X);
+    taucs_printf("relative 2-norm of error is %.2e\n", rerr);
+  }
 
-	// Silencing valgrind
-	if (X) 
-	  taucs_vec_free(A->flags,X);
-	if (B) 
-	  taucs_vec_free(A->flags,B);
-	if (Y) 
-	  taucs_vec_free(A->flags,Y);
-	if (Z) 
-	  taucs_vec_free(A->flags,Z);
+  rnorm_many(A,Y,B,Z,(int)opt_nrhs);
 
-	taucs_ccs_free(A);
+  if (opt_nrhs == 1) 
+  {
+    double xnorm = taucs_vec_norm2(A->n,A->flags,Y);
+    taucs_printf("2-norm of x is %.2e\n", xnorm);
+  }
 
+
+  // Silencing valgrind
+  if (X) 
+    taucs_vec_free(A->flags,X);
+  if (B) 
+    taucs_vec_free(A->flags,B);
+  if (Y) 
+    taucs_vec_free(A->flags,Y);
+  if (Z) 
+    taucs_vec_free(A->flags,Z);
+  
+  taucs_ccs_free(A);
+  
   return 0;
 }
