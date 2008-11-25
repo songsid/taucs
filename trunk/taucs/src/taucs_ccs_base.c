@@ -32,6 +32,8 @@ taucs_ccs_free(taucs_ccs_matrix* matrix)
 */
 
 #ifdef TAUCS_CORE_GENERAL
+static taucs_ccs_matrix *taucs_ccs_create_pattern(int m, int n, int nnz);
+
 taucs_ccs_matrix* 
 taucs_ccs_create(int m, int n, int nnz, int flags)
 {
@@ -57,6 +59,8 @@ taucs_ccs_create(int m, int n, int nnz, int flags)
     A = taucs_cccs_create(m,n,nnz);
 #endif
   
+  if (flags & TAUCS_PATTERN)
+    A = taucs_ccs_create_pattern(m, n, nnz);
 
   if (A) {
     A->flags = flags;
@@ -66,6 +70,35 @@ taucs_ccs_create(int m, int n, int nnz, int flags)
     return NULL;
   }
 }
+
+taucs_ccs_matrix *taucs_ccs_create_pattern(int m, int n, int nnz) 
+{
+  taucs_ccs_matrix* matrix;
+
+  matrix = (taucs_ccs_matrix*) taucs_malloc(sizeof(taucs_ccs_matrix));
+  if (!matrix) { 
+    taucs_printf("taucs_ccs_create: out of memory\n");
+    return NULL; 
+  }
+
+  matrix->flags = TAUCS_PATTERN;
+
+  matrix->n = n;
+  matrix->m = m;
+  matrix->colptr = (int*)    taucs_malloc((n+1) * sizeof(int));
+  matrix->rowind = (int*)    taucs_malloc(nnz   * sizeof(int));
+  matrix->values.v = NULL;
+  if (!(matrix->colptr) || !(matrix->rowind)) {
+    taucs_printf("taucs_ccs_create: out of memory (n=%d, nnz=%d)\n",n,nnz);
+    taucs_free(matrix->colptr); 
+    taucs_free(matrix->rowind); 
+    taucs_free (matrix);
+    return NULL; 
+  }
+
+  return matrix;
+}
+
 #endif /*TAUCS_CORE_GENERAL*/
 
 #ifndef TAUCS_CORE_GENERAL

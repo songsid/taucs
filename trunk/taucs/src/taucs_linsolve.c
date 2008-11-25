@@ -267,6 +267,8 @@ int taucs_linsolve(taucs_ccs_matrix* A,
   taucs_ccs_matrix* M    = NULL;
   taucs_ccs_matrix* PMPT = NULL;
 
+  double opt_max_kappa_R = -1;
+
   double  opt_pfunc_nproc = -1;
 
   if (!A && nrhs==0) {
@@ -309,6 +311,8 @@ int taucs_linsolve(taucs_ccs_matrix* A,
       understood |= taucs_getopt_boolean(options[i],opt_arg,"taucs.solve.minres",&opt_minres); 
       understood |= taucs_getopt_double(options[i],opt_arg,"taucs.solve.maxits",&opt_maxits); 
       understood |= taucs_getopt_double(options[i],opt_arg,"taucs.solve.convergetol",&opt_convergetol); 
+
+      understood |= taucs_getopt_double(options[i],opt_arg,"taucs.multiqr.max_kappa_R",&opt_max_kappa_R); 
 
       if (!understood) taucs_printf("taucs_linsolve: illegal option [[%s]]\n",
 				    options[i]);
@@ -695,9 +699,17 @@ int taucs_linsolve(taucs_ccs_matrix* A,
       tc = taucs_ctime();
       
       
-      f->L = taucs_ccs_factor_qr(A, f->rowperm, 
-				 TRUE, /* only R */
-				 QTB, nrhs);
+      if (opt_max_kappa_R < 0)
+	f->L = taucs_ccs_factor_qr(A, f->rowperm, 
+				   FALSE, /* only R */
+				   QTB, nrhs);
+      else {
+	f->L = taucs_ccs_factor_pseudo_qr(A, f->rowperm, 
+					   opt_max_kappa_R, FALSE, /* only R */
+					   QTB, nrhs);
+	int perb_number = taucs_multiqr_get_perb_number(f->L);
+	taucs_printf("taucs_linsolve: did %d peturbations, effective rank = %d\n", perb_number, A->n - perb_number);
+      }
 
       /* TEMP */
       taucs_free(rowperm);

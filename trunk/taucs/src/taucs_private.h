@@ -292,6 +292,7 @@ taucs_ccs_matrix* taucs_dtl(ccs_transpose)(taucs_ccs_matrix* A);
 taucs_ccs_matrix* taucs_ccs_transpose     (taucs_ccs_matrix* A);
 void              taucs_ccs_permute_rows_inplace(taucs_ccs_matrix *A, int *row_order);
 
+taucs_ccs_matrix *taucs_ccs_find_ata_pattern(taucs_ccs_matrix *A);
 
 /*** taucs_ccs_io.c ***/
 
