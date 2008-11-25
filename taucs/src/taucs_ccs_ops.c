@@ -859,7 +859,7 @@ taucs_dtl(ccs_transpose)(taucs_ccs_matrix *A)
 #endif /* not TAUCS_CORE_GENERAL*/
 
 /*************************************************************************************
- * Function: multilu_reorder_rows
+ * Function: taucs_ccs_permute_rows_inplace
  *
  * Description: Reorders the rows of the given matrix, in place
  *
@@ -881,6 +881,68 @@ void taucs_ccs_permute_rows_inplace(taucs_ccs_matrix *A, int *row_order)
   taucs_free(inverse_r);
 }
 #endif
+
+/*************************************************************************************
+ * Function: taucs_ccs_find_ata_pattern
+ *
+ * Description: Finds the pattern of A'A (LOWER matrix returned).
+ *
+ *************************************************************************************/
+#ifdef TAUCS_CORE_GENERAL
+taucs_ccs_matrix *taucs_ccs_find_ata_pattern(taucs_ccs_matrix *A)
+{
+  taucs_ccs_matrix *AT = taucs_ccs_transpose(A);
+
+  int *flag = taucs_malloc(A->m * sizeof(int));
+  memset(flag, 0, A->m * sizeof(int));
+
+  /* Find size of A'A */
+  int ata_nnz = 0;
+  int mark = 0;
+  for (int i = 0; i < A->n; i++) {
+    mark++;
+
+    for(int j = A->colptr[i]; j < A->colptr[i + 1]; j++) {
+      int row = A->rowind[j];
+      for(int k = AT->colptr[row]; k < AT->colptr[row + 1]; k++) {
+	int row1 = AT->rowind[k];
+	if (row1 >= i && flag[row1] != mark) {
+	  ata_nnz++;
+	  flag[row1] = mark;
+	}
+      }
+    }
+  }
+
+  /* Now we can form AA' */
+  taucs_ccs_matrix *ATA = taucs_ccs_create(A->n, A->n, ata_nnz, TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_PATTERN);
+  ata_nnz = 0;
+  for (int i = 0; i < A->n; i++) {
+    ATA->colptr[i] = ata_nnz;
+    mark++;
+
+    for(int j = A->colptr[i]; j < A->colptr[i + 1]; j++) {
+      int row = A->rowind[j];
+      for(int k = AT->colptr[row]; k < AT->colptr[row + 1]; k++) {
+	int row1 = AT->rowind[k];
+	if (row1 >= i && flag[row1] != mark) {
+	  ATA->rowind[ata_nnz] = row1;
+	  ata_nnz++;
+	  flag[row1] = mark;
+	}
+      }
+    }
+  }
+  ATA->colptr[A->n] = ata_nnz;
+
+  taucs_ccs_free(AT);
+  taucs_free(flag);
+
+  return ATA;
+}
+
+#endif
+
 /*********************************************************/
 /*                                                       */
 /*********************************************************/

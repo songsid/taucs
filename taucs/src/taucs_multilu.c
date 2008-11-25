@@ -1814,6 +1814,7 @@ int is_member(int x, int *S, int n)
  *              ready to update.  
  *
  *************************************************************************************/
+#ifdef TAUCS_CONFIG_PFUNC
 static void pfunc_recursive_factorize_supercolumn(void *args) 
 {
   multilu_context *mcontext;
@@ -1821,6 +1822,7 @@ static void pfunc_recursive_factorize_supercolumn(void *args)
   pfunc_unpack(args, "void *, int, int, int", (void *)&mcontext, &pivot_supercol, &depth, &max_depth);
   recursive_factorize_supercolumn(mcontext, pivot_supercol, depth, max_depth);
 }
+#endif
 
 
 cilk static int recursive_factorize_supercolumn(multilu_context *mcontext, 
@@ -2819,6 +2821,7 @@ static void allocate_factor(multilu_context* context, int m, int n, int supercol
  *              subtree rooted at subtree_root.
  *
  *************************************************************************************/
+#ifdef TAUCS_CONFIG_PFUNC
 static void pfunc_align_add_subtree(void *args)
 {
   multilu_context *mcontext;
@@ -2828,6 +2831,7 @@ static void pfunc_align_add_subtree(void *args)
   pfunc_unpack(args, "void *, void * int, int *", (void *)&mcontext, (void *)&addto, &subtree_root, &map_cols);
   align_add_subtree(mcontext, addto, subtree_root, map_cols);
 }
+#endif
 
 cilk static void align_add_subtree(multilu_context* mcontext, multilu_contrib_block *addto, int subtree_root, int *map_cols)
 {
@@ -2972,6 +2976,7 @@ cilk void align_add_from(multilu_context* mcontext,multilu_contrib_block *addto,
  *              is discarded.
  *
  *************************************************************************************/
+#ifdef TAUCS_CONFIG_PFUNC
 static void pfunc_align_add(void *args)
 {
   multilu_context *mcontext;
@@ -2983,6 +2988,7 @@ static void pfunc_align_add(void *args)
 	       &map_cols, &m0, &m1, &n0, &n1);
   align_add(mcontext, addto, addfrom, map_cols, m0, m1, n0, n1);
 }
+#endif
 
 cilk void align_add(multilu_context* mcontext ,multilu_contrib_block *addto, multilu_contrib_block *addfrom, int *map_cols, 
 		    int m0, int m1, int n0, int n1)
@@ -3092,6 +3098,7 @@ cilk void align_add(multilu_context* mcontext ,multilu_contrib_block *addto, mul
  *              assumes that addfrom columns are fully contained in addto's.
  *
  *************************************************************************************/
+#ifdef TUACS_CONFIG_PFUNC
 static void pfunc_align_add_rows(void *args)
 {
   multilu_context *mcontext;
@@ -3103,6 +3110,7 @@ static void pfunc_align_add_rows(void *args)
 	       &map_cols, &m0, &m1, &n0, &n1);
   align_add_rows(mcontext, addto, addfrom, map_cols, m0, m1, n0, n1);
 }
+#endif
 
 cilk void align_add_rows(multilu_context* mcontext, multilu_contrib_block *addto, multilu_contrib_block *addfrom, int *map_cols,
 			 int m0, int m1, int n0, int n1)
@@ -3221,6 +3229,7 @@ cilk void align_add_rows(multilu_context* mcontext, multilu_contrib_block *addto
  *              assumes that addfrom rows are fully contained in addto's.
  *
  *************************************************************************************/
+#ifdef TAUCS_CONFIG_PFUNC
 static void pfunc_align_add_cols(void *args)
 {
   multilu_context *mcontext;
@@ -3232,6 +3241,7 @@ static void pfunc_align_add_cols(void *args)
 	       &map_cols, &m0, &m1, &n0, &n1);
   align_add_cols(mcontext, addto, addfrom, map_cols, m0, m1, n0, n1);
 }
+#endif
 
 cilk void align_add_cols(multilu_context* mcontext, multilu_contrib_block *addto, multilu_contrib_block *addfrom, int *map_cols,
 			 int m0, int m1, int n0, int n1)

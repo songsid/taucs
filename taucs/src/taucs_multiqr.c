@@ -2194,8 +2194,8 @@ static void check_for_perb(multiqr_context *mcontext, int supercol, taucs_double
     {
       int perb_column  = i;
 
-      taucs_printf("INF: Doing a preturbation in column %d (supercolumn %d), new row is %d, matching pivot row is %d.\n", 
-		   factor_block->pivot_cols[i], supercol, F->m + F->perbs, factor_block->pivot_rows[i]);
+      //taucs_printf("INF: Doing a preturbation in column %d (supercolumn %d), new row is %d, matching pivot row is %d.\n", 
+      //factor_block->pivot_cols[i], supercol, F->m + F->perbs, factor_block->pivot_rows[i]);
 
       enlarge_factor_block(mcontext, supercol, F->m + F->perbs);
       if (*B != NULL)
@@ -2280,8 +2280,8 @@ static void check_for_perb(multiqr_context *mcontext, int supercol, taucs_double
   // Now we can handle structural singularity by adding rows so that the singularity is eliminated.
   while (factor_block->row_pivots_number < factor_block->col_pivots_number)
   {
-    taucs_printf("INF: Doing a preturbation due to structual singularity in column %d (supercolumn %d), new row is %d.\n",
-		 factor_block->pivot_cols[factor_block->row_pivots_number], supercol, F->m + F->perbs);
+    //taucs_printf("INF: Doing a preturbation due to structual singularity in column %d (supercolumn %d), new row is %d.\n",
+    //		 factor_block->pivot_cols[factor_block->row_pivots_number], supercol, F->m + F->perbs);
 
     int perb_column  = factor_block->row_pivots_number; 
     enlarge_factor_block(mcontext, supercol, F->m + F->perbs);
@@ -2346,7 +2346,7 @@ static void refine_R(multiqr_context *mcontext, double max_kappa_R, int keep_q, 
 						      mcontext, 
 						      NULL, NULL);
   
-  taucs_printf("INF: Estimated values: Kappa = %.2e (norm = %.2e, inv_norm = %.2e) \n", norm/inv_norm, norm, inv_norm);
+  //taucs_printf("INF: Estimated values: Kappa = %.2e (norm = %.2e, inv_norm = %.2e) \n", norm/inv_norm, norm, inv_norm);
   while (norm > inv_norm * max_kappa_R) 
   {
     // If first time create map from columns to supercolumn
@@ -2425,7 +2425,7 @@ static void refine_R(multiqr_context *mcontext, double max_kappa_R, int keep_q, 
     values_in_new_row[perb_column] = perb_sign * F->perb_value;
 
     /* Put new perbs in factor */
-    taucs_printf("INF: Perbutation at column %d\n", perb_column);
+    //taucs_printf("INF: Perbutation at column %d\n", perb_column);
     F->perb_indexs = taucs_realloc(F->perb_indexs, (F->perbs + 1) * sizeof(taucs_datatype));
     F->perb_indexs[F->perbs] = perb_sign * perb_column;
 
@@ -2513,7 +2513,7 @@ static void refine_R(multiqr_context *mcontext, double max_kappa_R, int keep_q, 
 					   mcontext, 
 					   NULL, NULL);
     
-    taucs_printf("INF: Estimated Kappa after perturbation(%d) = %.2e (norm = %.2e, inv_norm = %.2e)\n", F->perbs, norm/inv_norm, norm, inv_norm);
+    //taucs_printf("INF: Estimated Kappa after perturbation(%d) = %.2e (norm = %.2e, inv_norm = %.2e)\n", F->perbs, norm/inv_norm, norm, inv_norm);
     
   }
   
@@ -3714,8 +3714,6 @@ void permute_by_factor(taucs_multiqr_factor *F, taucs_datatype *B0, int ld_B0,
   int missing_pivots = 0;
   for(i = 0; i < F->num_blocks; i++) 
     missing_pivots += F->blocks[i]->col_pivots_number - F->blocks[i]->row_pivots_number;
-
-  taucs_printf("DBG: number of missing pivots %d", missing_pivots);
 
   // Keep a place to find the indexes of empty rows in the pivotal part. 
   // Fully eliminated, nonpivotal rows will be swaped in.
