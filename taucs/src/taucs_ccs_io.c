@@ -24,11 +24,11 @@
 #include <fcntl.h>
 
 
+#ifdef TAUCS_CORE_GENERAL
+
 /*********************************************************/
 /* read binary                                           */
 /*********************************************************/
-
-#ifdef TAUCS_CORE_GENERAL
 
 taucs_ccs_matrix* 
 taucs_ccs_read_binary(char* filename)
@@ -118,6 +118,48 @@ taucs_ccs_read_binary(char* filename)
 
   return A;
 }
+
+/*********************************************************/
+/* write binary                                          */
+/*********************************************************/
+void taucs_ccs_write_binary(taucs_ccs_matrix *A, char* filename)
+{
+  int     f;
+  ssize_t bytes_wrote;
+
+  taucs_printf("taucs_ccs_binary: writing binary matrix %s\n",filename);
+  
+#ifdef OSTYPE_win32
+  f = open(filename,
+	   _O_WRONLY | _O_CREAT | _O_BINARY, 
+	   _S_IREAD | _S_IWRITE | _S_IEXEC);
+#else
+  f = open(filename,O_WRONLY | O_CREAT | O_TRUNC, S_IRWXO | S_IRWXG | S_IRWXU);
+#endif
+
+  bytes_wrote = write(f, &A->m, sizeof(int));
+  bytes_wrote = write(f, &A->n, sizeof(int));
+  bytes_wrote = write(f, &A->flags,sizeof(int)); 
+  bytes_wrote = write(f, A->colptr, (A->n + 1) * sizeof(int));
+  bytes_wrote = write(f, A->rowind, A->colptr[A->n] * sizeof(int));
+
+  int datatype_size = 0;
+  if (A->flags & TAUCS_SINGLE) { 
+    datatype_size = sizeof(taucs_single);
+  } else if (A->flags & TAUCS_DOUBLE) {
+    datatype_size = sizeof(taucs_double);
+  } else if (A->flags & TAUCS_SCOMPLEX) {
+    datatype_size = sizeof(taucs_scomplex);
+  } else if (A->flags & TAUCS_DCOMPLEX) {
+    datatype_size = sizeof(taucs_dcomplex);
+  }
+  bytes_wrote = write(f, A->values.v, A->colptr[A->n] * datatype_size);
+
+  close(f);
+
+  taucs_printf("taucs_ccs_write_binary: done writing\n");
+}
+
 
 /*********************************************************/
 /* read hb                                               */

@@ -844,7 +844,7 @@ taucs_ccs_matrix *taucs_dtl(ccs_transpose)(taucs_ccs_matrix *A, int pattern_only
 	if (do_values)
 	  (At->taucs_values)[index] = (A->taucs_values)[j];
 	
-	row_size[row]++;
+	row_index[row]++;
       }
   
   

@@ -308,6 +308,8 @@ taucs_ccs_matrix*     taucs_ccs_read_mtx         (char* filename,int flags);
 taucs_ccs_matrix* taucs_dtl(ccs_read_ccs)        (char* filename,int flags);
 taucs_ccs_matrix*     taucs_ccs_read_ccs         (char* filename,int flags);
 taucs_ccs_matrix* taucs_ccs_read_binary          (char* filename);
+taucs_ccs_matrix* taucs_ccs_read_binary          (char* filename);
+void              taucs_ccs_write_binary         (taucs_ccs_matrix *A, char* filename);
 void*             taucs_vec_read_binary (int n, int flags,          char* filename);
 int               taucs_vec_write_binary(int n, int flags, void* v, char* filename);
 taucs_ccs_matrix* taucs_ccs_read_hb              (char* filename,int flags);
