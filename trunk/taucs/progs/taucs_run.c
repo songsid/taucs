@@ -96,6 +96,7 @@ int main(int argc, char* argv[])
   char* opt_ijv = NULL;
   char* opt_ijv_zero = NULL;
   char* opt_hb  = NULL;
+  char* opt_bin = NULL;
   char* opt_log = "stdout";
   double opt_3d = -1.0;
   double opt_2d = -1.0;
@@ -124,6 +125,7 @@ int main(int argc, char* argv[])
     understood |= taucs_getopt_string(argv[i],opt_arg,"taucs_run.ijv",&opt_ijv);
 		understood |= taucs_getopt_string(argv[i],opt_arg,"taucs_run.ijvz",&opt_ijv_zero);
     understood |= taucs_getopt_string(argv[i],opt_arg,"taucs_run.hb", &opt_hb );
+    understood |= taucs_getopt_string(argv[i],opt_arg,"taucs_run.bin", &opt_bin );
     understood |= taucs_getopt_string(argv[i],opt_arg,"taucs_run.log",&opt_log);
     understood |= taucs_getopt_double(argv[i],opt_arg,"taucs_run.mesh3d",&opt_3d);
     understood |= taucs_getopt_boolean(argv[i],opt_arg,"taucs_run.mesh3d.rand",&opt_3d_rand);
@@ -234,7 +236,9 @@ int main(int argc, char* argv[])
     datatype = A->flags;
   }
 
-
+  if (opt_bin) {
+    A = taucs_ccs_read_binary(opt_bin);
+  }
   if (!A) {
     taucs_printf("taucs_run: there is no matrix!\n");
     return 1;
