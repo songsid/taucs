@@ -31,6 +31,19 @@
 #define TAUCS_DENSE_SYNC      
 #endif
 
+#ifdef TAUCS_CORE_GENERAL
+/*************************************************************************************
+ * Function: EnvVar
+ *
+ * Description: Return env variables
+ *
+ *************************************************************************************/
+int EnvVar(int ispec, char *name, char *opts, int n1, int n2, int n3, int n4);
+
+#endif
+
+#ifndef TAUCS_CORE_GENERAL
+
 /*************************************************************************************
  * NON CILKED versions (REGULAR)
  *************************************************************************************/
@@ -305,3 +318,4 @@ cilk void taucs_dtl(SwapLines)(taucs_datatype *A, int n, int lda, int *ipiv, int
 
 #endif
 
+#endif

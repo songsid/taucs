@@ -433,7 +433,7 @@ struct file {
 
   { "taucs_norm_est",      "DIRSRC", csource | generic | dreal | sreal | dcomplex | scomplex},
 
-  { "taucs_dense",         "DIRSRC", cilksource |           dreal | sreal | dcomplex | scomplex},
+  { "taucs_dense",         "DIRSRC", cilksource | generic | dreal | sreal | dcomplex | scomplex},
   { "taucs_multilu",       "DIRSRC", cilksource | generic | dreal | sreal | dcomplex | scomplex},
   { "taucs_multiqr",       "DIRSRC", csource | generic | dreal | sreal | dcomplex | scomplex},
 

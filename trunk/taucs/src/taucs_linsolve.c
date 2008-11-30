@@ -698,7 +698,6 @@ int taucs_linsolve(taucs_ccs_matrix* A,
       tw = taucs_wtime();
       tc = taucs_ctime();
       
-      
       if (opt_max_kappa_R < 0)
 	f->L = taucs_ccs_factor_qr(A, f->rowperm, 
 				   FALSE, /* only R */
