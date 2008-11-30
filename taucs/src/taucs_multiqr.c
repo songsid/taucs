@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
 
 #define TAUCS_CORE_CILK
 #include "taucs.h"
@@ -22,8 +23,130 @@
 #pragma lang -C
 #endif
 
+/*************************************************************************************
+ * CODE FOR MEMORY PROFILING, change 0 to 1 to activate 1.
+ *************************************************************************************/
+#if 0
+
+#undef taucs_calloc
+#undef taucs_malloc
+#undef taucs_free
+#undef taucs_realloc
+
+#define taucs_calloc(x, y) taucs_callocX(x, y, __LINE__)
+#define taucs_malloc(x) taucs_mallocX(x, __LINE__)
+#define taucs_free(x) taucs_freeX(x, __LINE__)
+#define taucs_realloc(x,y) taucs_reallocX(x,y, __LINE__)
+
+#ifdef TAUCS_CORE_GENERAL
+
+#undef malloc
+#undef realloc
+#undef calloc
+#undef free
+
+static double mem[5000];
+static double shrink[5000];
+static double shrink_places[5000];
+static int init = -1;
+
+void *taucs_mallocX(long sz, int line) 
+{
+  if (init == -1) {
+    for (int i = 0; i < 5000; i++) {
+      mem[i] = 0;
+      shrink[i] = 0;
+      shrink_places[i] = 0;
+    }
+    init = 0;
+  }
+  
+  mem[line] += sz;
+  long *mm = malloc(sz + 2 * sizeof(long));
+  mm[0] = sz;
+  mm[1] = line;
+  return mm + 2;
+}
+
+void *taucs_callocX(int x, int y, int line)
+{
+  void *mm = taucs_mallocX(x * y, line);
+  memset(mm, 0, x * y);
+  return mm;
+}
+
+
+void taucs_freeX(void *mm_, int line)
+{
+  if (mm_ == NULL)
+    return;
+
+  long *mm = (long *)mm_ - 2;
+  mem[mm[1]] -= mm[0];
+  shrink[mm[1]] += mm[0];
+  shrink_places[line] += mm[0];
+  free(mm);
+}
+
+void *taucs_reallocX(void *mm_, long sz, int line)
+{
+  if (sz == 0) {
+    if (mm_ != NULL)
+      taucs_freeX(mm_, line);
+    return NULL;
+  }
+  if (mm_ == NULL && sz > 0)
+    return taucs_mallocX(sz, line);
+  if (mm_ == NULL)
+    return NULL;
+  else {
+    long *mm = (long *)mm_ - 2;
+    mem[mm[1]] += sz - mm[0];
+    shrink[mm[1]] += mm[0] - sz;
+    shrink_places[line] += mm[0] - sz;
+    mm[0] = sz;
+    mm = (long *)realloc(mm, sz + 2 * sizeof(long));
+    return mm + 2;
+  }
+}
+
+void report() 
+{
+  taucs_printf("\n\nMEMORY REPORT: \n\n");
+  taucs_printf("Current allocation: \n");
+  double total = 0;
+  for (int i = 0; i < 5000; i++) {
+    total += mem[i];
+    if (mem[i] != 0)
+      taucs_printf("Line %4d - %.1e bytes (%.1e shrank)\n", i, mem[i], shrink[i]);
+  }
+  taucs_printf("TOTAL - %.1e bytes\n", total);
+
+  taucs_printf("\nShrink places: \n");
+  for (int i = 0; i < 5000; i++) {
+    total += mem[i];
+    if (shrink_places[i] != 0)
+      taucs_printf("Line %4d - %.1e bytes\n", i, shrink_places[i]);
+  } 
+}
+
+#else
+
+void report();
+void *taucs_mallocX(long sz, int line) ;
+void *taucs_callocX(int x, int y, int line);
+void taucs_freeX(void *mm_, int line);
+void *taucs_reallocX(void *mm_, long sz, int line);
+
+#endif
+
+#endif
 
 /*************************************************************************************
+ * END OF CODE FOR MEMORY PROFILING CODE
+ *************************************************************************************/
+
+/************************************************************************************
  *************************************************************************************
  * Internal decleartions
  *************************************************************************************
@@ -65,8 +188,8 @@
  *                          
  */
 
-#define MULTIQR_MAX_OVERFILL_RATIO_R 2 
-#define MULTIQR_MAX_OVERFILL_RATIO_Y 2 
+#define MULTIQR_MAX_OVERFILL_RATIO_R 2
+#define MULTIQR_MAX_OVERFILL_RATIO_Y 2
 
 /* 
  * MULTIQR_RELAX_RULE_SIZE: When doing the relax phase (attempting to unite leaf  
@@ -74,7 +197,7 @@
  *                          the last column of p has at most MULTIQR_RELAX_RULE_SIZE 
  *                          descendent (i.e. leaf subtree size).  
  */
-#define MULTIQR_RELAX_RULE_SIZE         20
+#define MULTIQR_RELAX_RULE_SIZE       20
 
 
 /*
@@ -953,7 +1076,6 @@ static int detect_supercol(taucs_ccs_matrix *A, int *column_order, int *one_chil
 	  map_col_supercol[col] = fsc_num;
 	}
     }
-
   /* Close last supercolumn */
   fsc_num++;
 
@@ -1335,8 +1457,16 @@ static multiqr_context* multiqr_context_create(taucs_ccs_matrix *A, taucs_multiq
   /* Find workspace size */
   /* TODO: need to make sure workspace is big enough */
   context->workspace_size = 0;
-  for (i = 0 ; i < symbolic->number_supercolumns; i++)
-    context->workspace_size = max(context->workspace_size, symbolic->y_size[i] * max(symbolic->r_size[i], nrhs));
+  for (i = 0 ; i < symbolic->number_supercolumns; i++) 
+  {
+    double dummy, sz;
+    taucs_dtl(S_QR)(&dummy, symbolic->y_size[i], symbolic->r_size[i], max(symbolic->y_size[i], 1),
+		    &dummy, &sz, -1);
+    context->workspace_size = max(context->workspace_size, sz);
+    taucs_dtl(S_ApplyTransOrthoLeft)(&dummy, symbolic->y_size[i], symbolic->r_size[i], max(symbolic->y_size[i], 1),
+				     &dummy,  symbolic->y_size[i], max(symbolic->y_size[i], 1), &dummy, &sz, -1);
+    context->workspace_size = max(context->workspace_size, sz);
+  }
   context->QR_workspace = taucs_malloc(context->workspace_size * sizeof(taucs_datatype));
 
   if (have_B) 
@@ -1843,6 +1973,8 @@ static void factorize_supercolumn(multiqr_context *mcontext, int pivot_supercol,
     
     factor_block->reduced_block->type = UPPER_TRIANGULAR;
     factor_block->reduced_block->m = factor_block->reduced_block->n;
+    factor_block->reduced_block->rows = taucs_realloc(factor_block->reduced_block->rows, 
+						      factor_block->reduced_block->m * sizeof(int));
     
     /* The rows just eliminated are fully eliminated and will not reappear 
     factor_block->fully_eliminated_rows = 
@@ -1886,14 +2018,22 @@ static void factorize_supercolumn(multiqr_context *mcontext, int pivot_supercol,
 			  factor_block->col_pivots_number, factor_block->ld_YR1);
     factor_block->have_q = FALSE;
     factor_block->ld_YR1 = factor_block->row_pivots_number;
-
+    factor_block->pivot_rows = taucs_realloc(factor_block->pivot_rows, factor_block->row_pivots_number * sizeof(int));
 
     if (factor_block->tau3 != NULL) 
     {
       taucs_free(factor_block->tau3);
       factor_block->tau3 = NULL;
-      factor_block->Y3 = NULL;  /* will be compressed later, when freeing reduced blocks */
+      factor_block->Y3 = NULL;  
       factor_block->ld_Y3 = 0;
+
+      /* Compress R2 right now to save memory. Will be compressed again later. */
+      int new_ld = factor_block->row_pivots_number + factor_block->reduced_block->m;
+      compress_values_block(&factor_block->R2, new_ld,	factor_block->non_pivot_cols_number, factor_block->ld_R2);
+      factor_block->ld_R2 = new_ld;
+      factor_block->reduced_block->values = factor_block->R2 + factor_block->row_pivots_number;
+      factor_block->reduced_block->ld = new_ld; 
+
     }
 
     TAUCS_PROFILE_STOP(taucs_profile_multiqr_discard_y);
@@ -1917,7 +2057,6 @@ static void focus_front(multiqr_context *mcontext, int supercol, int hold_explic
 {  
   taucs_multiqr_symbolic *symbolic = mcontext->symbolic;
   multiqr_factor_block *factor_block = mcontext->F->blocks[supercol];
-  multiqr_reduced_block *reduced_block = factor_block->reduced_block;
   int y_size, r_size;
   int j, i, column, child;
 
@@ -2101,20 +2240,35 @@ static void focus_front(multiqr_context *mcontext, int supercol, int hold_explic
       factor_block->y_size = y_size;
       factor_block->row_pivots_number = min(factor_block->row_pivots_number, y_size);
       factor_block->non_pivot_rows_number = y_size - factor_block->row_pivots_number;
-      if (reduced_block != NULL)
-	reduced_block->m = factor_block->non_pivot_rows_number;
-     if (factor_block->non_pivot_rows_number == 0) 
-     {
-       if (reduced_block != NULL)
-	 free_reduced_block(reduced_block);
-       factor_block->reduced_block = NULL;
-       reduced_block = NULL;
+      if (y_size > 0)
+      {
+	factor_block->pivot_rows = taucs_realloc(factor_block->pivot_rows, y_size * sizeof(int));
+	factor_block->non_pivot_rows = factor_block->pivot_rows + factor_block->row_pivots_number;
+      } else {
+	taucs_free(factor_block->pivot_rows);
+	factor_block->pivot_rows = NULL;
+	factor_block->non_pivot_rows = NULL;
+      }
+
+      if (factor_block->row_pivots_number == 0) 
+      {
+	taucs_free(factor_block->R2);
+	factor_block->R2 = NULL;
+      } else {
+	/* Memory save in this case */
+	compress_values_block(&factor_block->YR1, 
+			      factor_block->y_size, factor_block->col_pivots_number, 
+			      factor_block->ld_YR1);
+	factor_block->ld_YR1 = factor_block->y_size;
+	factor_block->Y2 = factor_block->YR1 + factor_block->col_pivots_number;
+	if(factor_block->r_size > factor_block->col_pivots_number)
+	{
+	  compress_values_block(&factor_block->R2, 
+				factor_block->y_size, factor_block->r_size - factor_block->col_pivots_number,
+				factor_block->ld_R2);
+	  factor_block->ld_R2 = factor_block->y_size;
+	}
      }
-     if (factor_block->row_pivots_number == 0) 
-     {
-       taucs_free(factor_block->R2);
-       factor_block->R2 = NULL;
-     }   
     }
   }
 
@@ -2125,28 +2279,35 @@ static void focus_front(multiqr_context *mcontext, int supercol, int hold_explic
     /* Handle the case where r_size is smaller than bound */
     if (r_size < symbolic->r_size[supercol]) 
     {
-      factor_block->r_size = r_size;
       factor_block->non_pivot_cols_number = r_size - factor_block->col_pivots_number;
-      if (reduced_block != NULL)
-	reduced_block->n = factor_block->non_pivot_cols_number;
+      if (factor_block->non_pivot_cols_number > 0)
+      {
+	/* Memory save in this case */
+	int sz = factor_block->non_pivot_cols_number * factor_block->y_size * sizeof(taucs_datatype);
+	factor_block->R2 = (taucs_datatype *)taucs_realloc(factor_block->R2, sz);
+      }
       if (factor_block->non_pivot_cols_number == 0) 
       {
-	if (reduced_block != NULL)
-	  free_reduced_block(reduced_block);
-	factor_block->reduced_block = NULL;
-	reduced_block = NULL;
 	if (factor_block->R2 != NULL)
 	  taucs_free(factor_block->R2);
 	factor_block->R2 = NULL;
       }
+
+      factor_block->r_size = r_size;
+
     }
   }
 
-  /* To finalize the reduced block need to write row and column numbers */
+  /* Now we can surely create the reduced block */
   if (factor_block->non_pivot_rows_number > 0 && factor_block->non_pivot_cols_number > 0) 
   {
-    memcpy(reduced_block->rows, factor_block->non_pivot_rows, reduced_block->m * sizeof(int));
-    memcpy(reduced_block->columns, factor_block->non_pivot_cols, reduced_block->n * sizeof(int));
+    int m = factor_block->non_pivot_rows_number;
+    int n = factor_block->non_pivot_cols_number;
+    factor_block->reduced_block = allocate_reduced_block(m, n,
+							 factor_block->ld_R2, 
+							 factor_block->R2 + factor_block->row_pivots_number);
+    memcpy(factor_block->reduced_block->rows, factor_block->non_pivot_rows, m * sizeof(int));
+    memcpy(factor_block->reduced_block->columns, factor_block->non_pivot_cols, n * sizeof(int));
   }
 
   /* Return map_cols and map rows to empty */
@@ -2631,19 +2792,15 @@ static void allocate_factor_block(multiqr_context* mcontext, int pivot_supercol)
     factor_block->ld_R2 = y_size;  
     factor_block->R2 = (taucs_datatype*)taucs_malloc(sizeof(taucs_datatype) * rr_size * y_size);
     memset(factor_block->R2, 0, sizeof(taucs_datatype) * rr_size * y_size);
-    if (ry_size > 0)
-      factor_block->reduced_block = allocate_reduced_block(ry_size, rr_size, 
-							   factor_block->ld_R2, factor_block->R2 + s);
-    else 
-      factor_block->reduced_block = NULL;
   }
   else 
   {
     factor_block->R2 = NULL;
     factor_block->ld_R2 = 0;
-    factor_block->reduced_block = NULL;
+
   }
 
+  factor_block->reduced_block = NULL; /* will be allocated later */
   factor_block->Y3 = NULL;
   factor_block->ld_Y3 = 0;
   factor_block->tau3 = 0;  /* allocate as needed */
@@ -2854,7 +3011,6 @@ static void remove_reduced_block(multiqr_factor_block *block)
 {
   if (block->non_pivot_cols_number > 0 && block->non_pivot_rows_number > 0) 
   {
-    free_reduced_block(block->reduced_block);
     block->reduced_block = NULL;
     if (block->Y3 == NULL)   /* can compress reduced block only if we don't need Y3 */
     {

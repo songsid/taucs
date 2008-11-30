@@ -12,6 +12,13 @@
 #pragma lang -C
 #endif
 
+#ifdef TAUCS_CORE_GENERAL
+int EnvVar(int ispec, char *name, char *opts, int n1, int n2, int n3, int n4)
+{
+  return taucs_ilaenv(&ispec, name, opts, &n1, &n2, &n3, &n4);
+}
+#endif
+
 /* Not core general because different implementation for different datatypes */
 #ifndef TAUCS_CORE_GENERAL
 

@@ -467,6 +467,8 @@ extern taucs_scomplex taucs_cminusone_const;
 #define taucs_isnan(x) (isnan((double)(taucs_re(x))) || isnan((double)(taucs_im(x))))
 #define taucs_isinf(x) (isinf((double)(taucs_re(x))) || isinf((double)(taucs_im(x))))
 
+#define taucs_ilaenv taucs_blas_name(ilaenv)
+
 #ifdef TAUCS_CORE_SINGLE
 #define taucs_zero_const     taucs_szero_const
 #define taucs_one_const      taucs_sone_const
@@ -957,6 +959,8 @@ extern int finite(double);
 #ifndef isinf
 extern int isinf(double);
 #endif
+
+extern int taucs_ilaenv(int*, char*, char*, int*, int*, int*, int*);
 
 extern int taucs_potrf(char*, int*, taucs_datatype*, int*, int*);
 extern int taucs_getrf(int* m, int* n, taucs_datatype* A, int* lda, int* ipiv, int* info);

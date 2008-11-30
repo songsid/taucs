@@ -1003,14 +1003,14 @@ taucs_ccs_order(taucs_ccs_matrix* m,
     taucs_ccs_camd(m,perm,invperm,which);
   else if (!strcmp(which,"metis"))
     taucs_ccs_metis(m,perm,invperm,which);
-  else if (!strcmp(which,"metis_aat")) {
+  else if (!strcmp(which,"metis_ata")) {
     taucs_ccs_matrix *mtm = taucs_ccs_find_ata_pattern(m);
     taucs_ccs_metis(mtm,perm,invperm,which);
     taucs_ccs_free(mtm);
-    taucs_free(*invperm);
+    /*taucs_free(*invperm);
     *invperm = (int*) taucs_malloc((m->n + 1) * sizeof(int));
     for (int i=0; i<m->n; i++) 
-      (*invperm)[(*perm)[i]] = i;
+    (*invperm)[(*perm)[i]] = i;*/
   }
   else if (!strcmp(which,"genmmd"))
     taucs_ccs_genmmd(m,perm,invperm,which);
