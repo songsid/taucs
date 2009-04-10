@@ -9,7 +9,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <values.h>
 
 #define TAUCS_CORE_CILK
 #include "taucs.h"

@@ -1335,15 +1335,16 @@ void divide_to_groups(int r,int *first_child,int *next_child,int *pi,int *curr_g
 		      int n)
      /* divides the vertices into different groups (divides the tree is subtrees) */
 {
+  int *stack_array1, *stack_array2, stack_top; 
   int v;
   double low;
 
   if(first_child[r] == -1)   
     return;
 
-  int * stack_array1 = (int*)taucs_calloc(n+1,sizeof(int));
-  int * stack_array2 = (int*)taucs_calloc(n+1,sizeof(int));
-  int stack_top = 0;
+  stack_array1 = (int*)taucs_calloc(n+1,sizeof(int));
+  stack_array2 = (int*)taucs_calloc(n+1,sizeof(int));
+  stack_top = 0;
 
   if ((!stack_array1) || (!stack_array2))
     return;

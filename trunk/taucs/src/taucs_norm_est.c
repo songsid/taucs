@@ -62,7 +62,10 @@ taucs_double taucs_dtl(gross_largest_sv_explicit)(int m, int n,
 						  taucs_ccs_matrix *At, /* IF NULL WILL BE CALCULATED */
 						  void **_p_left_sv, void **_p_right_sv)
 {
+	#ifdef TAUCS_CORE_DOUBLE
+
   int i, iter;
+  taucs_double norm, norm2;
 
   taucs_datatype **p_left_sv = (taucs_datatype **)_p_left_sv;
   taucs_datatype **p_right_sv = (taucs_datatype **)_p_right_sv;
@@ -77,7 +80,7 @@ taucs_double taucs_dtl(gross_largest_sv_explicit)(int m, int n,
   /* Init with random normalized vector */
   for(i = 0; i < n; i++)
     sv[i] = RNDM;
-  taucs_double norm = taucs_vec_norm2(n, TAUCS_CORE_DATATYPE, sv);
+  norm = taucs_vec_norm2(n, TAUCS_CORE_DATATYPE, sv);
   for(i = 0; i < n; i++)
     sv[i] /= norm;
 
@@ -94,7 +97,7 @@ taucs_double taucs_dtl(gross_largest_sv_explicit)(int m, int n,
   if (p_left_sv != NULL) 
   {
     taucs_ccs_times_vec(A, sv, mv);
-    taucs_double norm2 = taucs_vec_norm2(m, TAUCS_CORE_DATATYPE, mv); /* In infinite accuracy we can use norm */
+    norm2 = taucs_vec_norm2(m, TAUCS_CORE_DATATYPE, mv); /* In infinite accuracy we can use norm */
     for(i = 0; i < m; i++)
       mv[i] /= norm2;
     *p_left_sv = mv;
@@ -108,6 +111,9 @@ taucs_double taucs_dtl(gross_largest_sv_explicit)(int m, int n,
     taucs_free(sv);
 
   return sqrt(norm);  
+  #else
+	return taucs_get_nan(); 
+  #endif	
 }
 
 #endif
@@ -153,7 +159,9 @@ taucs_double taucs_dtl(gross_largest_sv_implicit)(int m, int n,
 						  void *params, 
 						  void **_p_left_sv, void **_p_right_sv)
 {
+#ifdef TAUCS_CORE_DOUBLE
   int i, iter;
+  taucs_double norm, norm2;
 
   taucs_datatype **p_left_sv = (taucs_datatype **)_p_left_sv;
   taucs_datatype **p_right_sv = (taucs_datatype **)_p_right_sv;
@@ -165,7 +173,7 @@ taucs_double taucs_dtl(gross_largest_sv_implicit)(int m, int n,
   /* Init with random normalized vector */
   for(i = 0; i < n; i++)
     sv[i] = RNDM;
-  taucs_double norm = taucs_vec_norm2(n, TAUCS_CORE_DATATYPE, sv);
+  norm = taucs_vec_norm2(n, TAUCS_CORE_DATATYPE, sv);
   for(i = 0; i < n; i++)
     sv[i] /= norm;
 
@@ -182,7 +190,7 @@ taucs_double taucs_dtl(gross_largest_sv_implicit)(int m, int n,
   if (p_left_sv != NULL) 
   {
     matrix_func(sv, mv, params);
-    taucs_double norm2 = taucs_vec_norm2(m, TAUCS_CORE_DATATYPE, mv); /* In infinite accuracy we can use norm */
+    norm2 = taucs_vec_norm2(m, TAUCS_CORE_DATATYPE, mv); /* In infinite accuracy we can use norm */
     for(i = 0; i < m; i++)
       mv[i] /= norm2;
     *p_left_sv = mv;
@@ -196,6 +204,10 @@ taucs_double taucs_dtl(gross_largest_sv_implicit)(int m, int n,
     taucs_free(sv);
 
   return sqrt(norm);  
+
+  #else
+	return taucs_get_nan(); 
+  #endif	
 }
 
 #endif
@@ -233,11 +245,12 @@ taucs_double taucs_norm_1(taucs_ccs_matrix *A)
 #ifndef TAUCS_CORE_GENERAL
 taucs_double taucs_dtl(norm_1)(taucs_ccs_matrix *A)
 {
+  int j, i;
   taucs_double norm1 = -1;
-  for(int i = 0; i < A->n; i++)
+  for(i = 0; i < A->n; i++)
   {
     taucs_double this = 0.0;
-    for(int j = A->colptr[i]; j < A->colptr[i+1]; j++)
+    for(j = A->colptr[i]; j < A->colptr[i+1]; j++)
       this += taucs_abs(A->taucs_values[j]);
     norm1 = max(this, norm1);
   }
