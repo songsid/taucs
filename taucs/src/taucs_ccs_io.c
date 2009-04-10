@@ -124,6 +124,7 @@ taucs_ccs_read_binary(char* filename)
 /*********************************************************/
 void taucs_ccs_write_binary(taucs_ccs_matrix *A, char* filename)
 {
+  int datatype_size;
   int     f;
   ssize_t bytes_wrote;
 
@@ -143,7 +144,7 @@ void taucs_ccs_write_binary(taucs_ccs_matrix *A, char* filename)
   bytes_wrote = write(f, A->colptr, (A->n + 1) * sizeof(int));
   bytes_wrote = write(f, A->rowind, A->colptr[A->n] * sizeof(int));
 
-  int datatype_size = 0;
+  datatype_size = 0;
   if (A->flags & TAUCS_SINGLE) { 
     datatype_size = sizeof(taucs_single);
   } else if (A->flags & TAUCS_DOUBLE) {

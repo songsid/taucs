@@ -81,6 +81,7 @@ void rnorm_many(taucs_ccs_matrix* A, void* x, void* b, void* aux,int nrhs)
 
 int main(int argc, char* argv[])
 {
+  double start;
   int rc;
   int i,j;
 
@@ -113,7 +114,9 @@ int main(int argc, char* argv[])
   int datatype     = TAUCS_DOUBLE;
 
   int opt_all1rhs  = 0;
-	
+
+  double rerr;
+
   for (i=0; argv[i]; i++) {
     int understood = FALSE;
     
@@ -354,13 +357,13 @@ int main(int argc, char* argv[])
     }   
   }
 
-  double start = taucs_wtime();
+  start = taucs_wtime();
   rc = taucs_linsolve(A,NULL,(int)opt_nrhs,Y,B,argv,opt_arg);
   taucs_printf("total solve time is %.2e sec\n", taucs_wtime() - start);
   
   if (!opt_all1rhs && opt_nrhs == 1) {
     taucs_vec_axpby_many(A->n,A->flags,1.0,X,-1.0,Y,Z,(int)opt_nrhs);
-    double rerr = taucs_vec_norm2(A->n, A->flags,Z) / taucs_vec_norm2(A->n, A->flags, X);
+    rerr = taucs_vec_norm2(A->n, A->flags,Z) / taucs_vec_norm2(A->n, A->flags, X);
     taucs_printf("relative 2-norm of error is %.2e\n", rerr);
   }
 

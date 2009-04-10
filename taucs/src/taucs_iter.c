@@ -513,6 +513,7 @@ taucs_conjugate_gradients(taucs_ccs_matrix* A,
 			  double            convergetol
 			  )
 {
+  double ct;
   double* X = (double*) vX;
   double* B = (double*) vB;
   double *P, *R, *Q, *Z ;
@@ -563,7 +564,7 @@ taucs_conjugate_gradients(taucs_ccs_matrix* A,
   for (i=0; i<n; i++) R[i] = B[i];
   */
 
-  double ct = -taucs_wtime();
+  ct = -taucs_wtime();
 
   taucs_ccs_times_vec(A,X,R);
 
