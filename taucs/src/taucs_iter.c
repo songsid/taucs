@@ -571,7 +571,7 @@ taucs_conjugate_gradients(taucs_ccs_matrix* A,
   for (i=0; i<n; i++) R[i] = B[i] - R[i];
 
   Res_norm = Init_norm = twonorm(n,R);
-  printf("two norm of initial residual %.2e\n",Init_norm);
+  taucs_printf("two norm of initial residual %.2e\n",Init_norm);
   if ( Init_norm == 0.0 ) Init_norm = 1.0;
   ratio = 1.0;
  
