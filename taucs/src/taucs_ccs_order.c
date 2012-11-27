@@ -22,7 +22,9 @@
    The only change is the addition of the stats argument.
 */
 
+#ifdef TAUCS_CONFIG_COLAMD
 #include "../external/src/colamd.h"
+#endif
 
 static void
 taucs_ccs_colamd(taucs_ccs_matrix* m, 
